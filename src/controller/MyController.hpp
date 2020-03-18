@@ -12,12 +12,14 @@
 #include <bsoncxx/builder/stream/document.hpp>
 #include <bsoncxx/builder/stream/helpers.hpp>
 #include <bsoncxx/json.hpp>
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <mongocxx/client.hpp>
 #include <mongocxx/instance.hpp>
 #include <mongocxx/stdx.hpp>
 #include <mongocxx/uri.hpp>
+#include <string>
 
 #include "db/TDBHandler.hpp"
 #include "dto/DTOs.hpp"
@@ -51,6 +53,8 @@ class MyController : public oatpp::web::server::api::ApiController
 
   oatpp::concurrency::SpinLock fMutex;
 
+  const std::string fDirectory = "Monitor/";
+
  public:
 /**
  *  Begin ENDPOINTs generation ('ApiController' codegen)
@@ -65,8 +69,12 @@ class MyController : public oatpp::web::server::api::ApiController
         "<meta charset=utf-8/>"
         "</head>"
         "<body>"
-        "<p>Web API for GBS diagnostics</p>"
+        "<p>The monitor page</p>"
+        "<a href='vacmon'>Monitor page</a>"
+        "<div>"
+        "<p>Web API for ELIADE</p>"
         "<a href='swagger/ui'>Checkout Swagger-UI page</a>"
+        "</div>"
         "</body>"
         "</html>";
     auto response = createResponse(Status::CODE_200, html);
@@ -75,94 +83,6 @@ class MyController : public oatpp::web::server::api::ApiController
   }
 
   // TODO Insert Your endpoints here !!!
-  ENDPOINT_INFO(getEnergy)
-  {
-    info->summary = "Get the current/last Energy information";
-    info->addResponse<EnergyDto::ObjectWrapper>(Status::CODE_200,
-                                                "application/json");
-  }
-  ADD_CORS(getEnergy)
-  ENDPOINT("GET", "/GBS/GetEnergy", getEnergy)
-  {
-    auto dto = database->GetEnergy();
-    auto response = createDtoResponse(Status::CODE_200, dto);
-    return response;
-  }
-
-  ENDPOINT_INFO(getEnergyList)
-  {
-    info->summary = "Get the list of Energy information";
-    info->addResponse<List<EnergyDto::ObjectWrapper>::ObjectWrapper>(
-        Status::CODE_200, "application/json");
-  }
-  ADD_CORS(getEnergyList)
-  ENDPOINT("GET", "/GBS/GetEnergyList", getEnergyList)
-  {
-    auto dto = database->GetEnergyList();
-    auto response = createDtoResponse(Status::CODE_200, dto);
-    return response;
-  }
-
-  ENDPOINT_INFO(getFluxList)
-  {
-    info->summary = "Get the list of Flux information";
-    info->addResponse<List<FluxDto::ObjectWrapper>::ObjectWrapper>(
-        Status::CODE_200, "application/json");
-  }
-  ADD_CORS(getFluxList)
-  ENDPOINT("GET", "/GBS/GetFluxList", getFluxList)
-  {
-    auto dto = database->GetFluxList();
-    auto response = createDtoResponse(Status::CODE_200, dto);
-    return response;
-  }
-
-  ENDPOINT_INFO(getPosition)
-  {
-    info->summary = "Get the current/last Position information";
-    info->addResponse<PositionDto::ObjectWrapper>(Status::CODE_200,
-                                                  "application/json");
-  }
-  ADD_CORS(getPosition)
-  ENDPOINT("GET", "/GBS/GetPosition", getPosition)
-  {
-    auto dto = database->GetPosition();
-    auto response = createDtoResponse(Status::CODE_200, dto);
-    return response;
-  }
-
-  ENDPOINT_INFO(postPosition)
-  {
-    info->summary = "Post the current/last Position information";
-    info->addConsumes<PositionDto::ObjectWrapper>("application/json");
-    info->addResponse<PositionDto::ObjectWrapper>(Status::CODE_200,
-                                                  "application/json");
-  }
-  ADD_CORS(postPosition)
-  ENDPOINT("POST", "/GBS/PostPosition", postPosition,
-           BODY_DTO(PositionDto::ObjectWrapper, dto))
-  {
-    auto echo = database->PostPosition(dto);
-    auto response = createDtoResponse(Status::CODE_200, echo);
-    return response;
-  }
-
-  ENDPOINT_INFO(postCalibration)
-  {
-    info->summary = "Post the current/last Calibration results";
-    info->addConsumes<CalibrationDto::ObjectWrapper>("application/json");
-    info->addResponse<CalibrationDto::ObjectWrapper>(Status::CODE_200,
-                                                     "application/json");
-  }
-  ADD_CORS(postCalibration)
-  ENDPOINT("POST", "/GBS/PostCalibration", postCalibration,
-           BODY_DTO(CalibrationDto::ObjectWrapper, dto))
-  {
-    auto echo = database->PostCalibration(dto);
-    auto response = createDtoResponse(Status::CODE_200, echo);
-    return response;
-  }
-
   ENDPOINT_INFO(getVacMonList)
   {
     info->summary = "Get the list of VacMon information";
@@ -204,6 +124,45 @@ class MyController : public oatpp::web::server::api::ApiController
     auto response = createDtoResponse(Status::CODE_200, dto);
     return response;
   }
+
+  ENDPOINT("GET", "/vacmon", vacmonIndex)
+  {
+    auto fin = std::ifstream(fDirectory + "/index.html");
+    std::string indexHTML{""};
+    std::string buf{""};
+    // while (fin >> buf) {
+    while (std::getline(fin, buf)) {
+      indexHTML += buf;
+    }
+
+    const String html(indexHTML.c_str());
+    auto response = createResponse(Status::CODE_200, html);
+    response->putHeader(Header::CONTENT_TYPE, "text/html");
+    return response;
+  }
+
+  ENDPOINT("GET", "/vacmon/{path}", vacmon, PATH(String, path))
+  {
+    auto fileName = path->std_str();
+    auto fin = std::ifstream(fDirectory + fileName);
+    std::string indexHTML{""};
+    std::string buf{""};
+    // while (fin >> buf) {
+    while (std::getline(fin, buf)) {
+      indexHTML += buf;
+    }
+    const String html(indexHTML.c_str());
+
+    auto response = createResponse(Status::CODE_200, html);
+    if (fileName.find(".js") != std::string::npos) {
+      response->putHeader(Header::CONTENT_TYPE, "application/javascript");
+    } else if (fileName.find(".css") != std::string::npos) {
+      response->putHeader(Header::CONTENT_TYPE, "text/css");
+    }  // Favicon...
+
+    return response;
+  }
+
 /**
  *  Finish ENDPOINTs generation ('ApiController' codegen)
  */

@@ -46,7 +46,7 @@ void run()
   oatpp::network::server::Server server(connectionProvider, connectionHandler);
 
   /* Priny info about server port */
-  OATPP_LOGI("Beam diagnosis API server", "Server running on port %s",
+  OATPP_LOGI("Vacuum monitor server", "Server running on port %s",
              connectionProvider->getProperty("port").getData());
 
   /* Run server */

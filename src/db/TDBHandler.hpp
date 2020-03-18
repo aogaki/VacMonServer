@@ -25,18 +25,6 @@ class TDBHandler
   TDBHandler();
   ~TDBHandler(){};
 
-  EnergyDto::ObjectWrapper GetEnergy();
-  List<EnergyDto::ObjectWrapper>::ObjectWrapper GetEnergyList();
-
-  List<FluxDto::ObjectWrapper>::ObjectWrapper GetFluxList();
-
-  PositionDto::ObjectWrapper GetPosition();
-  PositionDto::ObjectWrapper PostPosition(PositionDto::ObjectWrapper dto);
-
-  CalibrationDto::ObjectWrapper PostCalibration(
-      CalibrationDto::ObjectWrapper dto);
-  List<CalibrationDto::ObjectWrapper>::ObjectWrapper GetCalibrationList();
-
   List<VacMonDto::ObjectWrapper>::ObjectWrapper GetVacMonList();
   List<VacMonDto::ObjectWrapper>::ObjectWrapper GetVacMonList(long start,
                                                               long stop);
@@ -45,7 +33,6 @@ class TDBHandler
  private:
   oatpp::concurrency::SpinLock fLock;
 
-  mongocxx::pool fPool;
   mongocxx::pool fEliadePool;
 
   std::unique_ptr<TGraph> fGraph;
