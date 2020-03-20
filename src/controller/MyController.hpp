@@ -23,6 +23,7 @@
 
 #include "db/TDBHandler.hpp"
 #include "dto/DTOs.hpp"
+#include "oatpp/core/base/StrBuffer.hpp"
 #include "oatpp/core/concurrency/SpinLock.hpp"
 #include "oatpp/core/macro/codegen.hpp"
 #include "oatpp/core/macro/component.hpp"
@@ -109,6 +110,9 @@ class MyController : public oatpp::web::server::api::ApiController
     info->queryParams.add<String>("stop").description =
         "End time of the graph in UNIX time, NOT JS Date::getTime()";
     info->queryParams["stop"].required = false;
+    info->queryParams.add<String>("name").description =
+        "The name of monitor circuit with P.  PA1 or PA2 only";
+    info->queryParams["name"].required = false;
   }
   ADD_CORS(getVacMonGraph)
   ENDPOINT("GET", "/ELIADE/GetVacMonGraph", getVacMonGraph,
@@ -117,48 +121,34 @@ class MyController : public oatpp::web::server::api::ApiController
     std::lock_guard<oatpp::concurrency::SpinLock> lock(fMutex);
     auto start = request->getQueryParameter("start", "0");
     auto stop = request->getQueryParameter("stop", "0");
-    // fMutex.unlock();
+    auto name = request->getQueryParameter("name", "PA1");
 
-    auto dto = database->GetVacMonGraph(std::stol(start->std_str()),
-                                        std::stol(stop->std_str()));
+    auto dto =
+        database->GetVacMonGraph(std::stol(start->std_str()),
+                                 std::stol(stop->std_str()), name->std_str());
     auto response = createDtoResponse(Status::CODE_200, dto);
     return response;
   }
 
-  ENDPOINT("GET", "/vacmon", vacmonIndex)
+  ENDPOINT("GET", "/vacmon/*", vacmon,
+           REQUEST(std::shared_ptr<IncomingRequest>, request))
   {
-    auto fin = std::ifstream(fDirectory + "/index.html");
-    std::string indexHTML{""};
-    std::string buf{""};
-    // while (fin >> buf) {
-    while (std::getline(fin, buf)) {
-      indexHTML += buf;
+    auto fileName = request->getPathTail()->std_str();
+    if (fileName == "") fileName = "index.html";
+    auto file = fDirectory + fileName;
+    String buffer = oatpp::base::StrBuffer::loadFromFile(file.c_str());
+    if (buffer == nullptr) {  // Case:: no file
+      return createResponse(Status::CODE_404, "File not found");
     }
 
-    const String html(indexHTML.c_str());
-    auto response = createResponse(Status::CODE_200, html);
-    response->putHeader(Header::CONTENT_TYPE, "text/html");
-    return response;
-  }
-
-  ENDPOINT("GET", "/vacmon/{path}", vacmon, PATH(String, path))
-  {
-    auto fileName = path->std_str();
-    auto fin = std::ifstream(fDirectory + fileName);
-    std::string indexHTML{""};
-    std::string buf{""};
-    // while (fin >> buf) {
-    while (std::getline(fin, buf)) {
-      indexHTML += buf;
-    }
-    const String html(indexHTML.c_str());
-
-    auto response = createResponse(Status::CODE_200, html);
+    auto response = createResponse(Status::CODE_200, buffer);
     if (fileName.find(".js") != std::string::npos) {
       response->putHeader(Header::CONTENT_TYPE, "application/javascript");
     } else if (fileName.find(".css") != std::string::npos) {
       response->putHeader(Header::CONTENT_TYPE, "text/css");
-    }  // Favicon...
+    } else if (fileName.find("favicon.ico") != std::string::npos) {
+      response->putHeader(Header::CONTENT_TYPE, "image/vnd.microsoft.icon");
+    }  // Others?  I do not need
 
     return response;
   }

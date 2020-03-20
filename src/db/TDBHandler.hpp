@@ -12,6 +12,7 @@
 #include <mongocxx/pool.hpp>
 #include <mongocxx/stdx.hpp>
 #include <mongocxx/uri.hpp>
+#include <string>
 
 #include "dto/DTOs.hpp"
 #include "oatpp/core/Types.hpp"
@@ -28,7 +29,8 @@ class TDBHandler
   List<VacMonDto::ObjectWrapper>::ObjectWrapper GetVacMonList();
   List<VacMonDto::ObjectWrapper>::ObjectWrapper GetVacMonList(long start,
                                                               long stop);
-  VacMonGraphDto::ObjectWrapper GetVacMonGraph(long start = 0, long stop = 0);
+  VacMonGraphDto::ObjectWrapper GetVacMonGraph(long start = 0, long stop = 0,
+                                               std::string name = "PA1");
 
  private:
   oatpp::concurrency::SpinLock fLock;

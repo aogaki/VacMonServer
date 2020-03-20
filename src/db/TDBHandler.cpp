@@ -90,7 +90,8 @@ List<VacMonDto::ObjectWrapper>::ObjectWrapper TDBHandler::GetVacMonList(
   return result;
 }
 
-VacMonGraphDto::ObjectWrapper TDBHandler::GetVacMonGraph(long start, long stop)
+VacMonGraphDto::ObjectWrapper TDBHandler::GetVacMonGraph(long start, long stop,
+                                                         std::string name)
 {
   auto conn = fEliadePool.acquire();
   auto collection = (*conn)["ELIADE"]["VacMon"];
@@ -102,12 +103,13 @@ VacMonGraphDto::ObjectWrapper TDBHandler::GetVacMonGraph(long start, long stop)
   if (stop != 0 && start > stop) std::swap(start, stop);
 
   auto option = document{} << "time" << open_document << "$gte" << start
-                           << "$lte" << stop << close_document << finalize;
+                           << "$lte" << stop << close_document << "name" << name
+                           << finalize;
   if (stop == 0) {
     option = document{} << "time" << open_document << "$gte" << start
-                        << close_document << finalize;
+                        << close_document << "name" << name << finalize;
   } else if (start == 0 && stop == 0) {
-    option = document{} << finalize;
+    option = document{} << "name" << name << finalize;
   }
   auto cursor = collection.find({option});
 
