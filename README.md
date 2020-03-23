@@ -1,6 +1,6 @@
 # API server for vacuum pressure monitor for Pfeiffer IF300A
 
-This program is based on Oat++(https://oatpp.io/) and MongoDB and (ROOT).  The monitor program https://github.com/aogaki/VacMonitor is working with libserial and mongocxx driver.  I simply use the libserial provided and installed Ubuntu 18.04.  In some documents, class member function and variables are not same.  When you will run on another distribution, please be careful and modify the code.
+This program is based on Oat++(https://oatpp.io/) and MongoDB and (ROOT).  The monitor program https://github.com/aogaki/VacMonitor is working with libserial and mongocxx driver.  I simply use the libserial provided and installed Ubuntu 18.04.  In some documents, class member function and variables are not same.  When you will run on another distribution and/or another version, please be careful and modify the code.
 
 ## Overview
 
