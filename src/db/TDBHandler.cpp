@@ -15,7 +15,8 @@ using bsoncxx::builder::basic::kvp;
 using bsoncxx::builder::basic::make_document;
 
 TDBHandler::TDBHandler()
-    : fEliadePool(mongocxx::uri("mongodb://daq:nim2camac@172.18.4.56/ELIADE"))
+    // : fEliadePool(mongocxx::uri("mongodb://daq:nim2camac@172.18.4.56/ELIADE"))
+    : fEliadePool(mongocxx::uri("mongodb://172.18.7.22/ELIADE"))
 {
   fGraph.reset(new TGraph);
   fGraph->SetTitle("Pressure monitor;Time;Pressure [mbar]");
