@@ -36,7 +36,7 @@ class AppComponent
       serverConnectionProvider)
   ([] {
     return oatpp::network::server::SimpleTCPConnectionProvider::createShared(
-        8000);
+        80);
   }());
 
   /**

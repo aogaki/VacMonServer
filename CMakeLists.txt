@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.1)
 
-set(project_name beam-diagnosis) ## rename your project here
+set(project_name vac-mon) ## rename your project here
 
 project(${project_name})
 
