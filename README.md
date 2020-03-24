@@ -1,33 +1,11 @@
-# oatpp-starter [![Build Status](https://dev.azure.com/lganzzzo/lganzzzo/_apis/build/status/oatpp.oatpp-starter?branchName=master)](https://dev.azure.com/lganzzzo/lganzzzo/_build/latest?definitionId=10&branchName=master)
+# API server for vacuum pressure monitor for Pfeiffer IF300A
 
-Starter project of oat++ (AKA oatpp) application. Based on oatpp Multithreaded (Simple) API.
-
-See more:
-
-- [Oat++ Website](https://oatpp.io/)
-- [Oat++ Github Repository](https://github.com/oatpp/oatpp)
-- [Get Started](https://oatpp.io/docs/start)
+This program is based on Oat++(https://oatpp.io/) and MongoDB and (ROOT).  The monitor program https://github.com/aogaki/VacMonitor is working with libserial and mongocxx driver.  I simply use the libserial provided and installed Ubuntu 18.04.  In some documents, class member function and variables are not same.  When you will run on another distribution and/or another version, please be careful and modify the code.
 
 ## Overview
 
-### Project layout
-
-```
-|- CMakeLists.txt                        // projects CMakeLists.txt
-|- src/
-|    |
-|    |- controller/                      // Folder containing MyController where all endpoints are declared
-|    |- dto/                             // DTOs are declared here
-|    |- AppComponent.hpp                 // Service config
-|    |- App.cpp                          // main() is here
-|
-|- test/                                 // test folder
-|- utility/install-oatpp-modules.sh      // utility script to install required oatpp-modules.  
-```
-
----
-
-### Build and Run
+This server is only API server (and a little bit data analysis by ROOT).  The data taking and storing into MongoDB is done by VacMonitor(https://github.com/aogaki/VacMonitor).  
+VacMonViewer(https://github.com/aogaki/VacMonViewer) is a web page application to watch the graph pressure vs time.  The viewer is written by TypeScript with Angular.  The web page files (html, js, css) are generated and store VacMonServer/Monitor.  In the case of you will modify and update, please google how to deploy Angular.  Now the base directory name of the server is vacmon.  When you regenerate the files, please do not forget to use --base-href=/vacmon/ option.
 
 #### Using CMake
 
@@ -41,12 +19,3 @@ $ mkdir build && cd build
 $ cmake ..
 $ make 
 $ ./my-project-exe  # - run application.
-
-```
-
-#### In Docker
-
-```
-$ docker build -t oatpp-starter .
-$ docker run -p 8000:8000 -t oatpp-starter
-```
