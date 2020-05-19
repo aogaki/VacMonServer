@@ -37,6 +37,7 @@ target_link_libraries(${project_name}-lib
         PUBLIC oatpp::oatpp-swagger
         ${LIBMONGOCXX_LIBRARIES}
         ${ROOT_LIBRARIES}
+        curl
 )
 
 add_definitions(-DOATPP_SWAGGER_RES_PATH="${oatpp-swagger_INCLUDE_DIRS}/../bin/oatpp-swagger/res")

@@ -29,7 +29,7 @@ class SwaggerComponent
     oatpp::swagger::DocumentInfo::Builder builder;
 
     builder.setTitle("Web API for beam diagnosis")
-        .setDescription("Post and Get the beam information")
+        .setDescription("For Ge detectors")
         .setVersion("1.0")
         .setContactName("Sohichiroh Aogaki")
         .setContactUrl("https://github.com/aogaki")
@@ -37,7 +37,7 @@ class SwaggerComponent
         .setLicenseName("Apache License, Version 2.0")
         .setLicenseUrl("http://www.apache.org/licenses/LICENSE-2.0")
 
-        .addServer("http://localhost", "server on localhost");
+        .addServer("http://172.18.7.22", "server on 172.18.7.22");
 
     return builder.build();
   }());

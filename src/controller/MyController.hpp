@@ -9,6 +9,8 @@
 #ifndef MyController_hpp
 #define MyController_hpp
 
+#include <curl/curl.h>
+
 #include <bsoncxx/builder/stream/document.hpp>
 #include <bsoncxx/builder/stream/helpers.hpp>
 #include <bsoncxx/json.hpp>
@@ -34,6 +36,16 @@ using bsoncxx::builder::stream::finalize;
 
 using bsoncxx::builder::basic::kvp;
 using bsoncxx::builder::basic::make_document;
+
+size_t onReceive(char *ptr, size_t size, size_t nmemb, void *stream)
+{
+  // streamはCURLOPT_WRITEDATAで指定したバッファへのポインタ
+  std::vector<char> *recvBuffer = (std::vector<char> *)stream;
+  const size_t sizes = size * nmemb;
+  recvBuffer->insert(recvBuffer->end(), (char *)ptr, (char *)ptr + sizes);
+  return sizes;
+}
+
 /**
  * Sample Api Controller.
  */
@@ -126,6 +138,48 @@ class MyController : public oatpp::web::server::api::ApiController
     auto dto =
         database->GetVacMonGraph(std::stol(start->std_str()),
                                  std::stol(stop->std_str()), name->std_str());
+    auto response = createDtoResponse(Status::CODE_200, dto);
+    return response;
+  }
+
+  ENDPOINT_INFO(getStatus)
+  {
+    info->summary = "Get the UPS mode, line or battery";
+    info->addResponse<List<UPSDto::ObjectWrapper>::ObjectWrapper>(
+        Status::CODE_200, "application/json");
+  }
+  ADD_CORS(getStatus)
+  ENDPOINT("GET", "/UPS/GetStatus", getStatus)
+  {
+    std::vector<char> responseData;
+    auto curl = curl_easy_init();
+    if (curl == nullptr) {
+      curl_easy_cleanup(curl);
+      return createResponse(Status::CODE_403, "Curl not working.");
+    }
+    curl_easy_setopt(curl, CURLOPT_URL,
+                     "http://172.18.6.243/cgi-bin/realInfo.cgi");
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, onReceive);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseData);
+    CURLcode res = curl_easy_perform(curl);
+    if (res != CURLE_OK) {
+      fprintf(stderr, "curl_easy_perform() failed: %s\n",
+              curl_easy_strerror(res));
+      curl_easy_cleanup(curl);
+      return createResponse(Status::CODE_403,
+                            "Curl not working. check std error of the server.");
+    }
+    curl_easy_cleanup(curl);
+
+    std::string mode = "";
+    for (auto i = 0; i < responseData.size(); i++) {
+      mode += responseData[i];
+      if (mode.find("Mode") != std::string::npos) break;
+    }
+    // std::cout << mode << std::endl;
+
+    auto dto = UPSDto::createShared();
+    dto->status = mode.c_str();
     auto response = createDtoResponse(Status::CODE_200, dto);
     return response;
   }
