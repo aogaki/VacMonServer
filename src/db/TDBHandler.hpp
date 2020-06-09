@@ -31,6 +31,7 @@ class TDBHandler
                                                               long stop);
   VacMonGraphDto::ObjectWrapper GetVacMonGraph(long start = 0, long stop = 0,
                                                std::string name = "PA1");
+  StatusDto::ObjectWrapper GetStatus();
 
  private:
   oatpp::concurrency::SpinLock fLock;

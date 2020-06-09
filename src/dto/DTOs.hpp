@@ -34,6 +34,13 @@ class VacMonGraphDto : public oatpp::data::mapping::type::Object
   DTO_FIELD(String, canvas);
 };
 
+class StatusDto : public oatpp::data::mapping::type::Object
+{
+  DTO_INIT(StatusDto, Object)
+
+  DTO_FIELD(String, status);
+};
+
 class UPSDto : public oatpp::data::mapping::type::Object
 {
   DTO_INIT(UPSDto, Object)

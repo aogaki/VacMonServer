@@ -17,7 +17,7 @@ using bsoncxx::builder::basic::make_document;
 TDBHandler::TDBHandler()
     // : fEliadePool(mongocxx::uri("mongodb://daq:nim2camac@172.18.4.56/ELIADE"))
     // : fEliadePool(mongocxx::uri("mongodb://172.18.7.22/ELIADE"))
-    : fEliadePool(mongocxx::uri("mongodb://localhost/ELIADE"))
+    : fEliadePool(mongocxx::uri("mongodb://172.18.7.22/ELIADE"))
 {
   fGraph.reset(new TGraph);
   fGraph->SetTitle("Pressure monitor;Time;Pressure [mbar]");
@@ -130,6 +130,69 @@ VacMonGraphDto::ObjectWrapper TDBHandler::GetVacMonGraph(long start, long stop,
   auto result = VacMonGraphDto::createShared();
 
   result->canvas = grJSON;
+
+  return result;
+}
+
+StatusDto::ObjectWrapper TDBHandler::GetStatus()
+{
+  // Stupid hard coding.  API should take parameters from a browser.
+  // But now I am too sleeeeeeeeepppppyyyyyyyy.
+  constexpr double maxPressure = 4.0e-4;  // mbar?  torr?
+  constexpr double minPressure = 0.00000000000000;
+  constexpr int noDataTime = 60;  // 1 minutes
+
+  auto result = StatusDto::createShared();
+  result->status = "OK";
+
+  auto conn = fEliadePool.acquire();
+  auto collection = (*conn)["ELIADE"]["VacMon"];
+
+  auto opts = mongocxx::options::find{};
+  const int nData = 20;  // Expecting both sensor has 10 data.  It is not true.
+  opts.limit(nData);
+  auto order = document{} << "time" << -1 << finalize;
+  opts.sort(order.view());
+  auto cursor = collection.find({}, opts);
+
+  std::vector<long> timeVec1;
+  std::vector<long> timeVec2;
+  std::vector<double> pressureVec1;
+  std::vector<double> pressureVec2;
+
+  for (auto doc : cursor) {
+    auto time = doc["time"].get_int64().value;
+    auto pressure = doc["pressure"].get_double().value;
+    auto name = doc["name"].get_utf8().value.to_string();
+    // std::cout << name << "\t" << time << "\t" << pressure << std::endl;
+
+    if (name == "PA1") {
+      timeVec1.push_back(time);
+      pressureVec1.push_back(pressure);
+    } else if (name == "PA2") {
+      timeVec2.push_back(time);
+      pressureVec2.push_back(pressure);
+    } else {
+      std::cout << "Unknown sensor name: " << name << std::endl;
+    }
+  }
+
+  // Be careful, following lines, return is used in if statements.
+  // Now checking only PA1.
+  // Check data taking is running or not
+  auto now = time(nullptr);
+  if ((now - timeVec1[0]) > noDataTime) {
+    result->status = "No data coming.  Check it!!";
+    return result;
+  }
+
+  // Check pressure is inside the range or not.
+  for (auto val : pressureVec1) {
+    if (val < minPressure || val > maxPressure) {
+      result->status = "Pressure at PA1 is out of range.  Check it!!";
+      return result;
+    }
+  }
 
   return result;
 }

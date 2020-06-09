@@ -144,45 +144,59 @@ class MyController : public oatpp::web::server::api::ApiController
 
   ENDPOINT_INFO(getStatus)
   {
-    info->summary = "Get the UPS mode, line or battery";
-    info->addResponse<List<UPSDto::ObjectWrapper>::ObjectWrapper>(
-        Status::CODE_200, "application/json");
+    info->summary = "Get the list of VacMon information";
+    info->addResponse<VacMonDto::ObjectWrapper>(Status::CODE_200,
+                                                "application/json");
   }
   ADD_CORS(getStatus)
-  ENDPOINT("GET", "/UPS/GetStatus", getStatus)
+  ENDPOINT("GET", "/ELIADE/GetStatus", getStatus)
   {
-    std::vector<char> responseData;
-    auto curl = curl_easy_init();
-    if (curl == nullptr) {
-      curl_easy_cleanup(curl);
-      return createResponse(Status::CODE_403, "Curl not working.");
-    }
-    curl_easy_setopt(curl, CURLOPT_URL,
-                     "http://172.18.6.243/cgi-bin/realInfo.cgi");
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, onReceive);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseData);
-    CURLcode res = curl_easy_perform(curl);
-    if (res != CURLE_OK) {
-      fprintf(stderr, "curl_easy_perform() failed: %s\n",
-              curl_easy_strerror(res));
-      curl_easy_cleanup(curl);
-      return createResponse(Status::CODE_403,
-                            "Curl not working. check std error of the server.");
-    }
-    curl_easy_cleanup(curl);
-
-    std::string mode = "";
-    for (auto i = 0; i < responseData.size(); i++) {
-      mode += responseData[i];
-      if (mode.find("Mode") != std::string::npos) break;
-    }
-    // std::cout << mode << std::endl;
-
-    auto dto = UPSDto::createShared();
-    dto->status = mode.c_str();
+    auto dto = database->GetStatus();
     auto response = createDtoResponse(Status::CODE_200, dto);
     return response;
   }
+
+  // ENDPOINT_INFO(getStatus)
+  // {
+  //   info->summary = "Get the UPS mode, line or battery";
+  //   info->addResponse<List<UPSDto::ObjectWrapper>::ObjectWrapper>(
+  //       Status::CODE_200, "application/json");
+  // }
+  // ADD_CORS(getStatus)
+  // ENDPOINT("GET", "/UPS/GetStatus", getStatus)
+  // {
+  //   std::vector<char> responseData;
+  //   auto curl = curl_easy_init();
+  //   if (curl == nullptr) {
+  //     curl_easy_cleanup(curl);
+  //     return createResponse(Status::CODE_403, "Curl not working.");
+  //   }
+  //   curl_easy_setopt(curl, CURLOPT_URL,
+  //                    "http://172.18.6.243/cgi-bin/realInfo.cgi");
+  //   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, onReceive);
+  //   curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseData);
+  //   CURLcode res = curl_easy_perform(curl);
+  //   if (res != CURLE_OK) {
+  //     fprintf(stderr, "curl_easy_perform() failed: %s\n",
+  //             curl_easy_strerror(res));
+  //     curl_easy_cleanup(curl);
+  //     return createResponse(Status::CODE_403,
+  //                           "Curl not working. check std error of the server.");
+  //   }
+  //   curl_easy_cleanup(curl);
+  //
+  //   std::string mode = "";
+  //   for (auto i = 0; i < responseData.size(); i++) {
+  //     mode += responseData[i];
+  //     if (mode.find("Mode") != std::string::npos) break;
+  //   }
+  //   // std::cout << mode << std::endl;
+  //
+  //   auto dto = UPSDto::createShared();
+  //   dto->status = mode.c_str();
+  //   auto response = createDtoResponse(Status::CODE_200, dto);
+  //   return response;
+  // }
 
   ENDPOINT("GET", "/vacmon/*", vacmon,
            REQUEST(std::shared_ptr<IncomingRequest>, request))
